@@ -18,8 +18,9 @@ class UserManager {
         this.initialHandlers(socket);
     }
     remove_User(socketId) {
-        this.users = this.users.filter(x => x.socket.id === socketId);
+        this.users = this.users.filter(x => x.socket.id !== socketId);
         this.queue = this.queue.filter(x => x === socketId);
+        // this.queue = this.queue.filter(x => x === socketId)
     }
     ClearQueue() {
         if (this.queue.length < 2) {
@@ -31,6 +32,7 @@ class UserManager {
             return;
         }
         const room = this.roomManager.createRoom(user1, user2);
+        this.ClearQueue();
     }
     initialHandlers(socket) {
         socket.on("offer", ({ sdp, roomId }) => {

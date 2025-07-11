@@ -28,8 +28,9 @@ export class UserManager {
 
     }
     remove_User(socketId:  string) {
-        this.users = this.users.filter(x => x.socket.id === socketId)
+        this.users = this.users.filter(x => x.socket.id !== socketId)
         this.queue = this.queue.filter(x => x === socketId)
+        // this.queue = this.queue.filter(x => x === socketId)
     }
 
     ClearQueue() {
@@ -43,6 +44,7 @@ export class UserManager {
             return;
         }
         const room = this.roomManager.createRoom(user1,user2)
+        this.ClearQueue()
     }
 
     initialHandlers(socket: Socket) {

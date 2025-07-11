@@ -1,5 +1,5 @@
 import express from "express";
-import http from "http"; // ✅ You forgot to import this//
+import http from "http";
 import { Server, Socket } from "socket.io";
 
 const app = express();
