@@ -34,17 +34,33 @@ export const Landing = () => {
     }, [videoRef]);
 
     if (!joined) {
-            
-    return <div>
-            <video autoPlay ref={videoRef}></video>
-            <input type="text" onChange={(e) => {
-                setName(e.target.value);
-            }}>
-            </input>
-            <button onClick={() => {
-                setJoined(true);
-            }}>Join</button>
+        return (
+        <div>
+            <h2>Hello from Landing</h2>
+            {/* <center><video autoPlay ref={videoRef}></video></center> */}
+            <center>
+            <video
+                autoPlay
+                ref={videoRef}
+                style={{ width: "100%", maxWidth: "1000px", height: "auto" }}
+            ></video>
+            </center>
+
+            <input
+                type="text"
+                placeholder="Enter your name"
+                onChange={(e) => setName(e.target.value)}
+            />
+            <br />
+            {name ? (
+                    <button onClick={() => {
+                        setJoined(true)
+                    }}>Join Room</button>
+            ) : (
+                <p>Please enter your name to join</p>
+            )}
         </div>
+    );
     }
 
     return <Room name={name} localAudioTrack={localAudioTrack} localVideoTrack={localVideoTrack} />
