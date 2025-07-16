@@ -9,7 +9,6 @@ const socket_io_1 = require("socket.io");
 const Usermanager_1 = require("./UserManager/Usermanager");
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
-const host = '10.193.49.25';
 const io = new socket_io_1.Server(server, {
     cors: {
         origin: "*"
@@ -28,6 +27,6 @@ app.get("/", (req, res) => {
         message: "Done"
     });
 });
-app.listen(3000, '0.0.0.0', () => {
-    console.log("Server running on http://0.0.0.0:3000");
+server.listen(3000, () => {
+    console.log("Server listening on port 3000");
 });
