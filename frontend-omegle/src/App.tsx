@@ -12,7 +12,7 @@ function App() {
         </div> */}
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/room" element={<Room />} />
+          {/* <Route path="/room" element={<Room />} /> */}
         </Routes>
       </div>
     </BrowserRouter>

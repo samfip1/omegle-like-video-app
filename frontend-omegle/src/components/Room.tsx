@@ -1,79 +1,122 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { io, Socket } from "socket.io-client";
+import { Socket, io } from "socket.io-client";
 
 const URL = "http://localhost:3000";
 
-export const Room = () => {
-    const [searchParams] = useSearchParams();
-    const [socket, setSocket] = useState<null | Socket>(null);
+export const Room = ({
+    name,
+    localAudioTrack,
+    localVideoTrack
+} : {
+    name : string,
+    localAudioTrack: MediaStreamTrack | null,
+    localVideoTrack: MediaStreamTrack | null
+}) => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [lobby, setLobby] = useState(true);
-    const name = searchParams.get("name");
+    const [socket, setSocket] = useState<null | Socket>(null);
+    const [sendingPc, setSendingPc] = useState<null | RTCPeerConnection>(null);
+    const [receivingPc, setReceivingPc] = useState<null | RTCPeerConnection>(null);
+    const [remoteVideoTrack, setRemoteVideoTrack] = useState<MediaStreamTrack | null>(null);
+    const [remoteAudioTrack, setRemoteAudioTrack] = useState<MediaStreamTrack | null>(null);
+    const [removemediaStream, setRemoteMediaStream] = useState<MediaStream | null>(null)
+    const remoteVideoRef = useRef<HTMLVideoElement>(null);
+    const localVideoRef = useRef<HTMLVideoElement>(null)
+    useEffect(() => {
+        const socket = io(URL);
+        socket.on('send-offer', async ({roomId}) => {
+            setLobby(false);
+            const pc = new RTCPeerConnection();
+            setSendingPc(pc);
+            if ( localVideoTrack) {
+                pc.addTrack(localVideoTrack)
+            }
+            if(localAudioTrack) {
+                pc.addTrack(localAudioTrack)
+            }
 
-    if (!name) {
-        return <div>Error: Please enter your name</div>;
-    }
+
+            // pc.onicecandidate = async (e) => {
+            //     if (e.candidate) {
+            //         pc.addIceCandidate(e.candidate)
+            //     }
+            // }
+            
+            pc.onnegotiationneeded = async () => {
+                alert("On negotiation needed")
+                const sdp = await pc.createOffer();
+                socket.emit("offer", {
+                    sdp,
+                    roomId
+                })
+            }
+        });
+
+        socket.on("offer", async ({roomId, sdp : RemoteSpd}) => {
+            setLobby(false);
+            const pc = new RTCPeerConnection();
+            pc.setRemoteDescription(RemoteSpd)
+            const sdp = await pc.createAnswer();
+            const stream = new MediaStream();
+
+            if(remoteVideoRef.current) {
+                remoteVideoRef.current.srcObject = stream
+            }
+            setRemoteMediaStream(stream)
+            // trickle ice 
+            setReceivingPc(pc);
+
+            pc.ontrack = (({track, type}) => {
+                if (type == 'audio') {
+                    // setRemoteAudioTrack(track);
+                    // @ts-ignore
+                    remoteVideoRef.current?.srcObject.addTrack(track)
+                } else {
+                    // setRemoteVideoTrack(track);
+                    // @ts-ignore
+                    remoteVideoRef.current?.srcObject.addTrack(track)
+                }
+                remoteVideoRef.current?.play()
+            })
+            socket.emit("answer", {
+                roomId,
+                sdp: sdp
+            });
+        });
+
+        socket.on("answer", ({roomId, sdp:remoteSdp }) => {
+            setLobby(false);
+            setSendingPc(pc => {
+                pc?.setRemoteDescription(remoteSdp)
+                return pc;
+            })
+        })
+
+        socket.on("lobby", () => {
+            setLobby(true);
+        })
+
+        setSocket(socket)
+    }, [name])
 
     useEffect(() => {
-        const socketInstance = io(URL, {
-            autoConnect: true,
-        });
+        if(localVideoRef.current) {
+            if(localVideoTrack) {
+                localVideoRef.current.srcObject = new MediaStream([localVideoTrack])
+                localVideoRef.current.play()
+            }
+        }
+    }, [localVideoRef])
 
-        console.log("Joining with name:", name);
-
-        setSocket(socketInstance);
-
-        socketInstance.on("send-offer", ({ roomId }: { roomId: string }) => {
-            console.log("send-offer received", roomId);
-            alert("send offer please");
-            setLobby(false);
-
-            socketInstance.emit("offer", {
-                sdp: "", // Replace with actual SDP if needed
-                roomId,
-            });
-        });
-
-        socketInstance.on("offer", ({ roomId, offer }: { roomId: string; offer: string }) => {
-            console.log("offer received", roomId, offer);
-            alert("received offer");
-            setLobby(false);
-
-            socketInstance.emit("answer", {
-                roomId,
-                sdp: "", // Replace with actual SDP if needed
-            });
-        });
-
-        socketInstance.on("answer", ({ roomId, answer }: { roomId: string; answer: string }) => {
-            console.log("answer received", roomId, answer);
-            alert("received answer");
-        });
-
-        socketInstance.on("lobby", () => {
-            console.log("You are in the lobby.");
-            setLobby(true);
-        });
-
-        return () => {
-            socketInstance.disconnect();
-            console.log("Socket disconnected");
-        };
-    }, [name]);
-
-    if (lobby) {
-        return <div>Waiting to connect you to someone...</div>;
-    }
 
     return (
-        <div>
-            <h2>Hello from Room</h2>
-            <p>Hello, {name}!</p>
+    <div>
+        Hi {name}
+        <video autoPlay width={400} height={400} ref={localVideoRef} />
+        {lobby ? <p>Waiting for someone to connect...</p> : null}
+        <video autoPlay width={400} height={400} ref={remoteVideoRef} />
+    </div>
+)
 
-            <div>
-                <video width={500} height={500} autoPlay muted></video>
-                <video width={500} height={500} autoPlay></video>
-            </div>
-        </div>
-    );
-};
+}

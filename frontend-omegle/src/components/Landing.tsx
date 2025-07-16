@@ -1,12 +1,50 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Room } from "./Room";
 
 export const Landing = () => {
     const [name, setName] = useState("");
+    const [localVideoTrack, setlocalVideoTracck] = useState<MediaStreamTrack | null>(null);
+    const [localAudioTrack, setLocalAudioTrack] = useState<MediaStreamTrack | null>(null);
+    const [joined, setJoined] = useState(false);
+    const videoRef = useRef<HTMLVideoElement>(null)
 
-    return (
+    const getCam = async() => {
+        const stream = await window.navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true
+        })
+        const audioTrack = stream.getAudioTracks()[0]
+        const videoTrack = stream.getVideoTracks()[0]
+
+        setLocalAudioTrack(audioTrack)
+        setlocalVideoTracck(videoTrack)
+        if(!videoRef.current) {
+            return
+        }
+        videoRef.current.srcObject = new MediaStream([videoTrack])
+        videoRef.current.play()
+    }
+
+    useEffect(() => {
+        if(videoRef && videoRef.current) {
+            getCam()
+        }
+    }, [videoRef])
+
+
+    if (!joined) {
+        return (
         <div>
             <h2>Hello from Landing</h2>
+            {/* <center><video autoPlay ref={videoRef}></video></center> */}
+            <center>
+            <video
+                autoPlay
+                ref={videoRef}
+                style={{ width: "100%", maxWidth: "1000px", height: "auto" }}
+            ></video>
+            </center>
+
             <input
                 type="text"
                 placeholder="Enter your name"
@@ -14,12 +52,16 @@ export const Landing = () => {
             />
             <br />
             {name ? (
-                <Link to={`/room/?name=${name}`}>
-                    <button>Join Room</button>
-                </Link>
+                    <button onClick={() => {
+                        setJoined(true)
+                    }}>Join Room</button>
             ) : (
                 <p>Please enter your name to join</p>
             )}
         </div>
     );
+    }
+
+    return <Room name={name} localVideoTrack={localVideoTrack} localAudioTrack={localAudioTrack}/>
+    
 };

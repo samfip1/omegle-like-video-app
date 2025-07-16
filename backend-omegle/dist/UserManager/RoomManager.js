@@ -18,6 +18,9 @@ class RoomManager {
         user1.socket.emit("send-offer", {
             roomId: roomid
         });
+        user2.socket.emit("send-offer", {
+            roomId: roomid
+        });
         console.log(`Sending offer to: ${user1.socket.id}, roomId: ${roomid}`);
     }
     onOffer(roomid, sdp) {
