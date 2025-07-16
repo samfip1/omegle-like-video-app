@@ -13,7 +13,7 @@ export const Room = () => {
     }
     useEffect(() => {
         const socket = io(URL, {
-            autoConnect: false
+            autoConnect: true
         });
         socket.on("send-offer", ({roomId}: {roomId: string}) => {
             console.log(roomId)

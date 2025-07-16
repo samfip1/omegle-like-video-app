@@ -9,6 +9,7 @@ const io = new Server(server);
 
 io.on("connection", (socket: Socket) => {
     console.log("A user logged");
+    
 });
 app.get("/", (req, res) => {
     res.json({
