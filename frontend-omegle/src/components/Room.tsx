@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { Socket, io } from "socket.io-client";
 
 const URL = "http://localhost:3000";
@@ -13,7 +12,7 @@ export const Room = ({
     localAudioTrack: MediaStreamTrack | null,
     localVideoTrack: MediaStreamTrack | null,
 }) => {
-    const [searchParams, setSearchParams] = useSearchParams();
+    // const [searchParams, setSearchParams] = useSearchParams();
     const [lobby, setLobby] = useState(true);
     const [socket, setSocket] = useState<null | Socket>(null);
     const [sendingPc, setSendingPc] = useState<null | RTCPeerConnection>(null);
@@ -24,6 +23,7 @@ export const Room = ({
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const localVideoRef = useRef<HTMLVideoElement>(null);
 
+    console.log(socket, sendingPc, receivingPc, remoteAudioTrack, remoteVideoTrack, remoteMediaStream)
     useEffect(() => {
         const socket = io(URL);
         socket.on('send-offer', async ({roomId}) => {
@@ -83,22 +83,7 @@ export const Room = ({
             // trickle ice 
             setReceivingPc(pc);
             // window.pcr = pc;
-            pc.ontrack = (e) => {
-                alert("ontrack");
-                // console.error("inside ontrack");
-                // const {track, type} = e;
-                // if (type == 'audio') {
-                //     // setRemoteAudioTrack(track);
-                //     // @ts-ignore
-                //     remoteVideoRef.current.srcObject.addTrack(track)
-                // } else {
-                //     // setRemoteVideoTrack(track);
-                //     // @ts-ignore
-                //     remoteVideoRef.current.srcObject.addTrack(track)
-                // }
-                // //@ts-ignore
-                // remoteVideoRef.current.play();
-            }
+           
 
             pc.onicecandidate = async (e) => {
                 if (!e.candidate) {
@@ -149,6 +134,7 @@ export const Room = ({
         });
 
         socket.on("answer", ({roomId, sdp: remoteSdp}) => {
+            console.log(roomId)
             setLobby(false);
             setSendingPc(pc => {
                 pc?.setRemoteDescription(remoteSdp)
