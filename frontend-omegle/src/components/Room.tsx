@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 // import { useSearchParams } from "react-router-dom";
 import { Socket, io } from "socket.io-client";
 
-const URL = "http://localhost:3000/";
+const URL = "https://omegle-like-video-ex1ghaotq-samfipwork-2000s-projects.vercel.app/";
 
 export const Room = ({
     name,
